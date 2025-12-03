@@ -1,0 +1,256 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+model UserRole {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  code       String   @unique
+  status     Int      @default(1) // 0 = inactive, 1 = active
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  users      User[]
+
+  @@map("user_roles")
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  firstName       String    @map("first_name")
+  lastName        String    @map("last_name")
+  email           String    @unique
+  avatar          String    @default("https://res.cloudinary.com/default/avatar.png")
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  password        String
+  status          Int       @default(1) // 0 = inactive, 1 = active
+  userRoleId      Int       @map("user_role_id")
+  rememberToken   String?   @map("remember_token")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  userRole        UserRole  @relation(fields: [userRoleId], references: [id])
+  
+  // Blog posts created/updated/deleted by this user
+  postsCreated    PostBlog[] @relation("PostCreatedBy")
+  postsUpdated    PostBlog[] @relation("PostUpdatedBy")
+  postsDeleted    PostBlog[] @relation("PostDeletedBy")
+
+  @@map("users")
+}
+
+// ============================================
+// BLOG SYSTEM
+// ============================================
+
+model PostCategoryBlog {
+  id        Int       @id @default(autoincrement())
+  name      Json      // { "fr": "Catégorie", "en": "Category" }
+  code      String    @unique
+  status    Int       @default(1)
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  posts     PostBlog[]
+
+  @@map("post_category_blogs")
+}
+
+model PostBlog {
+  id              BigInt    @id @default(autoincrement())
+  title           Json      // { "fr": "Titre", "en": "Title" }
+  slug            String    @unique
+  description     Json      // { "fr": "Description", "en": "Description" }
+  postText        Json      @map("post_text") // { "fr": "Contenu", "en": "Content" }
+  img             String    // URL de l'image principale
+  status          Int       @default(1)
+  postCategoryId  Int       @map("post_category_id")
+  createdBy       Int       @map("created_by")
+  updatedBy       Int?      @map("updated_by")
+  deletedBy       Int?      @map("deleted_by")
+  deletedAt       DateTime? @map("deleted_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  category        PostCategoryBlog @relation(fields: [postCategoryId], references: [id])
+  creator         User             @relation("PostCreatedBy", fields: [createdBy], references: [id])
+  updater         User?            @relation("PostUpdatedBy", fields: [updatedBy], references: [id])
+  deleter         User?            @relation("PostDeletedBy", fields: [deletedBy], references: [id])
+  comments        PostComment[]
+
+  @@map("post_blogs")
+}
+
+model PostComment {
+  id         BigInt    @id @default(autoincrement())
+  fullName   String    @map("full_name")
+  message    String    @db.Text
+  img        String    @default("https://res.cloudinary.com/default/avatar.png")
+  status     Int       @default(1) // 0 = pending, 1 = approved
+  postBlogId BigInt    @map("post_blog_id")
+  deletedAt  DateTime? @map("deleted_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  post       PostBlog  @relation(fields: [postBlogId], references: [id])
+
+  @@map("post_comments")
+}
+
+// ============================================
+// EVENTS
+// ============================================
+
+model Event {
+  id          BigInt   @id @default(autoincrement())
+  title       Json     // { "fr": "Titre", "en": "Title" }
+  description Json     // { "fr": "Description", "en": "Description" }
+  details     Json     // { "fr": "Détails", "en": "Details" }
+  bgImg       Json     @map("bg_img") // URL de l'image de fond
+  slug        String   @unique
+  imgs        Json     // Array d'URLs: ["url1", "url2"]
+  videos      Json     // Array d'URLs: ["url1", "url2"]
+  startDate   DateTime @map("start_date")
+  endDate     DateTime @map("end_date")
+  status      Int      @default(1)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("events")
+}
+
+// ============================================
+// ERGO NEWS
+// ============================================
+
+model ErgoNews {
+  id          BigInt    @id @default(autoincrement())
+  title       Json      // { "fr": "Titre", "en": "Title" }
+  slug        String    @unique
+  img         String    // URL de l'image
+  description Json      // { "fr": "Description", "en": "Description" }
+  status      Int       @default(1)
+  deletedAt   DateTime? @map("deleted_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("ergo_news")
+}
+
+// ============================================
+// TEAM
+// ============================================
+
+model TeamRole {
+  id        Int      @id @default(autoincrement())
+  name      Json     // { "fr": "Directeur", "en": "Director" }
+  code      String   @unique
+  status    Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  members   OurTeam[]
+
+  @@map("team_roles")
+}
+
+model OurTeam {
+  id            Int      @id @default(autoincrement())
+  firstName     String   @map("first_name")
+  lastName      String   @map("last_name")
+  email         String
+  img           String   // URL de la photo
+  sex           String   // "femme" ou "homme"
+  description   Json?    // { "fr": "Bio", "en": "Bio" }
+  socialNetwork Json?    @map("social_network") // { "linkedin": "url", "twitter": "url" }
+  status        Int      @default(1)
+  teamRoleId    Int      @map("team_role_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  role          TeamRole @relation(fields: [teamRoleId], references: [id])
+
+  @@map("our_teams")
+}
+
+// ============================================
+// WORKS (RÉALISATIONS)
+// ============================================
+
+model OurWork {
+  id          BigInt   @id @default(autoincrement())
+  title       String   @unique
+  description Json     // { "fr": "Description", "en": "Description" }
+  img         String   // URL de l'image principale
+  images      Json?    // Array d'URLs: ["url1", "url2"]
+  status      Int      @default(1)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("our_works")
+}
+
+// ============================================
+// PARTNERS
+// ============================================
+
+model Partner {
+  id        BigInt   @id @default(autoincrement())
+  nom       String
+  logo      String   // URL du logo
+  lien      String?  // URL du site web
+  status    Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("partners")
+}
+
+// ============================================
+// NEWSLETTER
+// ============================================
+
+model Newsletter {
+  id        BigInt   @id @default(autoincrement())
+  email     String
+  status    Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("newsletters")
+}
+
+// ============================================
+// PAGE VIEWS (ANALYTICS)
+// ============================================
+
+model PageView {
+  id         BigInt   @id @default(autoincrement())
+  pageUrl    String   @map("page_url")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  visitedAt  DateTime @map("visited_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("page_views")
+}
