@@ -14,11 +14,17 @@ import { TeamService } from './team.service';
 export class TeamController {
   constructor(private readonly teamService: TeamService) {}
 
-  // Public Route
+  // Public Routes
   @Public()
   @Get('team')
   findAll() {
     return this.teamService.findAll();
+  }
+
+  @Public()
+  @Get('team/:id')
+  findOnePublic(@Param('id', ParseIntPipe) id: number) {
+    return this.teamService.findOne(id);
   }
 
   // Admin Routes

@@ -14,11 +14,17 @@ import { WorksService } from './works.service';
 export class WorksController {
   constructor(private readonly worksService: WorksService) {}
 
-  // Public Route
+  // Public Routes
   @Public()
   @Get('works')
   findAll() {
     return this.worksService.findAll();
+  }
+
+  @Public()
+  @Get('works/:id')
+  findOnePublic(@Param('id', ParseIntPipe) id: number) {
+    return this.worksService.findOne(id);
   }
 
   // Admin Routes

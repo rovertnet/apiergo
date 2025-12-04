@@ -14,11 +14,17 @@ import { PartnersService } from './partners.service';
 export class PartnersController {
   constructor(private readonly partnersService: PartnersService) {}
 
-  // Public Route
+  // Public Routes
   @Public()
   @Get('partners')
   findAll() {
     return this.partnersService.findAll();
+  }
+
+  @Public()
+  @Get('partners/:id')
+  findOnePublic(@Param('id', ParseIntPipe) id: number) {
+    return this.partnersService.findOne(id);
   }
 
   // Admin Routes

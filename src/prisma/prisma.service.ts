@@ -2,77 +2,17 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
-export class PrismaService implements OnModuleInit, OnModuleDestroy {
-  private prisma: PrismaClient;
-
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor() {
-    this.prisma = new PrismaClient();
+    super({});
   }
 
   async onModuleInit() {
-    await this.prisma.$connect();
+    await this.$connect();
   }
 
   async onModuleDestroy() {
-    await this.prisma.$disconnect();
-  }
-
-  // Expose Prisma Client
-  get client() {
-    return this.prisma;
-  }
-
-  // Direct access to models
-  get user() {
-    return this.prisma.user;
-  }
-
-  get userRole() {
-    return this.prisma.userRole;
-  }
-
-  get postBlog() {
-    return this.prisma.postBlog;
-  }
-
-  get postCategoryBlog() {
-    return this.prisma.postCategoryBlog;
-  }
-
-  get postComment() {
-    return this.prisma.postComment;
-  }
-
-  get event() {
-    return this.prisma.event;
-  }
-
-  get ergoNews() {
-    return this.prisma.ergoNews;
-  }
-
-  get teamRole() {
-    return this.prisma.teamRole;
-  }
-
-  get ourTeam() {
-    return this.prisma.ourTeam;
-  }
-
-  get ourWork() {
-    return this.prisma.ourWork;
-  }
-
-  get partner() {
-    return this.prisma.partner;
-  }
-
-  get newsletter() {
-    return this.prisma.newsletter;
-  }
-
-  get pageView() {
-    return this.prisma.pageView;
+    await this.$disconnect();
   }
 
   /**
