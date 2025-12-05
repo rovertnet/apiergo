@@ -1,45 +1,41 @@
-FROM node:18-alpine AS development
+# ==================== DEVELOPMENT ====================
+FROM node:20-alpine AS development
 
 WORKDIR /app
 
-# Copy package files
+# Installer Nest CLI globalement
+RUN npm install -g @nestjs/cli
+
+# Installer curl pour wait-for-it et bash
+RUN apk add --no-cache bash curl
+
+# Copier package.json et package-lock.json
 COPY package*.json ./
 
-# Install dependencies
+# Installer les dépendances
 RUN npm ci
 
-# Copy source code
+# Copier le projet
 COPY . .
 
-# Generate Prisma Client
-RUN npx prisma generate
+# Builder le projet (optionnel)
+RUN npm run build
 
-# Expose port
-EXPOSE 3000
+# Copier le script wait-for-it
+COPY wait-for-it.sh /usr/local/bin/wait-for-it
+RUN chmod +x /usr/local/bin/wait-for-it
 
-# Start development server
-CMD ["npm", "run", "start:dev"]
+# Commande pour dev : attendre Postgres et Redis avant de lancer Nest
+CMD ["wait-for-it", "postgres:5432", "--", "wait-for-it", "redis:6379", "--", "npm", "run", "start:dev"]
 
-# Production stage
-FROM node:18-alpine AS production
+# ==================== PRODUCTION ====================
+FROM node:20-alpine AS production
 
 WORKDIR /app
 
-# Copy package files
 COPY package*.json ./
-
-# Install production dependencies only
 RUN npm ci --only=production
 
-# Copy built application
 COPY --from=development /app/dist ./dist
-COPY --from=development /app/prisma ./prisma
 
-# Generate Prisma Client
-RUN npx prisma generate
-
-# Expose port
-EXPOSE 3000
-
-# Start production server
-CMD ["node", "dist/main"]
+CMD ["node", "dist/main.js"]
